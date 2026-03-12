@@ -5,7 +5,7 @@ import logging
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'data_ingestion'))
 
 from datetime import date
-from region_data_ingestion import fetch_regional_usage_data
+from fuel_type_ingestion import fetch_fuel_type_data
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     logger.info(f"Backfill triggered: {start_date} to {end_date}")
 
     try:
-        fetch_regional_usage_data(start_date=start_date, end_date=end_date)
+        fetch_fuel_type_data(start_date=start_date, end_date=end_date)
     except Exception as e:
         logger.error(f"Ingestion failed: {e}")
         return func.HttpResponse(f"Ingestion failed: {str(e)}", status_code=500)

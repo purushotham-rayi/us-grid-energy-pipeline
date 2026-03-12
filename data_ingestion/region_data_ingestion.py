@@ -3,10 +3,10 @@ import logging
 from datetime import date, timedelta, datetime
 
 
-from utils import get_api_key, get_adls_client, save_to_adls, get_logger
+from utils import get_api_key, get_adls_client, save_to_adls
 
 API_KEY = get_api_key()
-logger=get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 regions = ["ERCO", "MISO", "PJM", "CISO", "ISNE", "NYIS", "SWPP"]
 # regions=["ERCO"]
@@ -57,7 +57,7 @@ def fetch_regional_usage_data(start_date, end_date):
                     adls_client=adls_client,
                     payload=payload,
                     container="bronze",
-                    file_path=f"{region}/region-data/{current_date}.json"
+                    file_path=f"{region}/region-data/year={current_date.year}/month={str(current_date.month).zfill(2)}/{current_date}.json"
                 )
             current_date+=timedelta(days=1)
     except Exception as e:

@@ -24,13 +24,7 @@ def get_adls_client():
 def get_appinsights_connection_string():
     return fetch_secret("appinsights-connection-string")
 
-def get_logger(name):
-    logger=logging.getLogger(name)
-    logger.setLevel(logging.INFO)
-    logger.addHandler(AzureLogHandler(connection_string=get_appinsights_connection_string()))
-    return logger
-
-logger=get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 def save_to_adls(adls_client, payload, container, file_path):
     file_system_client=adls_client.get_file_system_client(container)
