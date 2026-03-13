@@ -23,16 +23,21 @@ facet_type = {
 
 def fetch_regional_usage_data(start_date, end_date):
     current_date = start_date
-    try:
-        while current_date<=end_date:
-            start=f"{current_date}T00"
-            end=f"{current_date}T23"
-            json_data=[]
-            for region in regions:
+    
+    while current_date<=end_date:
+        start=f"{current_date}T00"
+        end=f"{current_date}T23"
+
+        for region in regions:
+            try:
                 json_data=[]
                 for key,value in facet_type.items():
                     url = f"https://api.eia.gov/v2/electricity/rto/region-data/data?api_key={API_KEY}&data[]=value&facets[respondent][]={region}&facets[type][]={value}&frequency=hourly&start={start}&end={end}&sort[0][column]=period&sort[0][direction]=asc&length=96"
                     response = requests.get(url)
+                    # If there is no response for a particular geion job still continues
+                    if not response.text.strip():
+                        logger.warning(f"Empty response for {region} / {key}, skipping.")
+                        continue
 
                     json_data.append({
                         'region':region,
@@ -41,17 +46,17 @@ def fetch_regional_usage_data(start_date, end_date):
                         'facet_data':response.json()
                     })
 
-                    logger.info(f"Repspnse Code: {response.status_code}")
                     logger.info(f"Fetched the data for {key}")
                 
                 logger.info(f"Fetched data for {region}......................")
+
                 payload={
                 'region':region,
                 'pulled_at': str(datetime.now()),
                 'date':str(datetime.now().date()),
                 'raw_data':json_data
                 }
-
+                #Save to ADLS
                 adls_client=get_adls_client()
                 save_to_adls(
                     adls_client=adls_client,
@@ -59,7 +64,9 @@ def fetch_regional_usage_data(start_date, end_date):
                     container="bronze",
                     file_path=f"{region}/region-data/year={current_date.year}/month={str(current_date.month).zfill(2)}/{current_date}.json"
                 )
-            current_date+=timedelta(days=1)
-    except Exception as e:
-        logger.error(f"Ingestion failed: {e}",exc_info=True)
-        raise
+            except Exception as e:
+                logger.error(f"Ingestion failed for {region} on {current_date}: {e}",exc_info=True)
+                continue
+            
+        current_date+=timedelta(days=1)
+
